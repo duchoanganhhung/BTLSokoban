@@ -6,7 +6,8 @@ import pygame
 
 from .utils import can_move, get_state, is_deadlock, is_solved, print_state
 from .state_codec import BoardIndex, encode_state_from_str, Zobrist, zobrist_initial, zobrist_update  # <- mới
-
+from .deadlock_manager import DeadlockManager
+from .deadlock_build import RetroBuilderSimple  # tên file bạn dùng
 
 # def bfs(matrix, player_pos, widget=None, visualizer=False):
 # 	print('Breadth-First Search')
@@ -86,6 +87,11 @@ def bfs(matrix, player_pos, widget=None, visualizer=False):
 
 	# --- NEW: board & encode ---
 	board = BoardIndex(matrix)
+	deadlock_mgr = DeadlockManager(board)
+	cells = [idx for idx, (r,c) in enumerate(board.from_idx) if matrix[r,c] not in ('X','$','%') ]
+	builder = RetroBuilderSimple(board, deadlock_mgr,cells = cells,matrix = matrix)
+	builder.build(max_k=3,max_comb_k=3,Pmax=2)
+	print("[DL] patterns", deadlock_mgr.count_patterns())
 	boxes_mask, player_idx = encode_state_from_str(initial_state, board)
 
 	# --- NEW: zobrist ---
@@ -113,8 +119,8 @@ def bfs(matrix, player_pos, widget=None, visualizer=False):
 				continue
 
 			# deadlock check vẫn dùng chuỗi như cũ (giữ nguyên logic)
-			if is_deadlock(new_state, shape):
-				continue
+			# if deadlock_mgr.known_deadlock_from_state(new_state):
+			# 	continue
 
 			# --- NEW: cập nhật khóa O(1) ---
 			moved_from_idx, moved_to_idx = (None, None) if box_delta is None else box_delta
@@ -124,7 +130,10 @@ def bfs(matrix, player_pos, widget=None, visualizer=False):
 				new_boxes_mask &= ~(1 << moved_from_idx)
 			if moved_to_idx is not None:
 				new_boxes_mask |= (1 << moved_to_idx)
-
+            
+			#DL check
+			if deadlock_mgr.match_boxes(new_boxes_mask):
+				continue
 			new_zkey = zobrist_update(
 				z, zkey, old_pidx, new_pidx, moved_from_idx, moved_to_idx
 			)

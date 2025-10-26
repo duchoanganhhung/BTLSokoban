@@ -1,18 +1,15 @@
 import pygame
 
-
 class Floor(pygame.sprite.Sprite):
-    def __init__(self, *groups, x, y):
+    def __init__(self, *groups, x, y, tile=64):
         super().__init__(*groups)
-        if x <= 15:
-            self.image = pygame.image.load('img/floor.png')
-        else:
-            self.image = pygame.image.load('img/sidefloor.png')
-        self.image = pygame.transform.scale(self.image, [64, 64])
-        self.rect = pygame.Rect(x * 64, y * 64, 64, 64)
+        img = pygame.image.load('img/floor.png').convert_alpha()
+        self.image = pygame.transform.scale(img, (tile, tile))
+        self.rect = pygame.Rect(x * tile, y * tile, tile, tile)
         self.x = x
         self.y = y
-        
+        self.tile = tile
+
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
@@ -21,8 +18,8 @@ class Floor(pygame.sprite.Sprite):
 
 
 class Goal(Floor):
-    def __init__(self, *groups, x, y):
-        super().__init__(*groups, x=x, y=y)
-        self.image = pygame.image.load('img/goal.png')
-        self.image = pygame.transform.scale(self.image, [64, 64])
-        self.rect = pygame.Rect(x * 64, y * 64, 64, 64)
+    def __init__(self, *groups, x, y, tile=64):
+        super().__init__(*groups, x=x, y=y, tile=tile)
+        img = pygame.image.load('img/goal.png').convert_alpha()
+        self.image = pygame.transform.scale(img, (tile, tile))
+        self.rect = pygame.Rect(x * tile, y * tile, tile, tile)

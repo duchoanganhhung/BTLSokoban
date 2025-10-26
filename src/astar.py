@@ -8,70 +8,8 @@ import pygame
 from .utils import (can_move_delta, dijkstra_sum, get_state, is_deadlock, is_solved,
                     manhattan_sum, print_state)
 from .state_codec import BoardIndex, encode_state_from_str, Zobrist, zobrist_initial, zobrist_update
-
-# def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhattan'):
-# 	print(f'A* - {heuristic.title()} Heuristic')
-# 	heur = '[A*]' if heuristic == 'manhattan' else '[Dijkstra]'
-# 	shape = matrix.shape
-# 	initial_state = get_state(matrix)
-# 	initial_cost = curr_depth = 0
-# 	if heuristic == 'manhattan':
-# 		curr_cost = manhattan_sum(initial_state, player_pos, shape)
-# 	else:
-# 		distances = defaultdict(lambda: [])
-# 		curr_cost = dijkstra_sum(initial_state, player_pos, shape, distances)
-# 	seen = {None}
-# 	heap = []
-# 	heappush(heap, (initial_cost, curr_cost, initial_state, player_pos, curr_depth, ''))
-# 	moves = [(1, 0), (-1, 0), (0, -1), (0, 1)]
-# 	direction = {
-# 		(1, 0): 'D',
-# 		(-1, 0): 'U', 
-# 		(0, -1): 'L',
-# 		(0, 1): 'R',
-# 	}
-# 	while heap:
-# 		if widget:
-# 			pygame.event.pump()
-# 		_, curr_cost, state, pos, depth, path = heappop(heap)
-# 		seen.add(state)
-# 		for move in moves:
-# 			new_state, move_cost = can_move(state, shape, pos, move)
-# 			deadlock = is_deadlock(new_state, shape)
-# 			if new_state in seen or deadlock:
-# 				continue
-# 			new_pos = pos[0] + move[0], pos[1] + move[1]
-# 			if heuristic == 'manhattan':
-# 				new_cost = manhattan_sum(new_state, new_pos, shape)
-# 			else:
-# 				new_cost = dijkstra_sum(new_state, new_pos, shape, distances)
-# 			if new_cost == float('inf'):
-# 				continue
-# 			heappush(heap, (
-# 				move_cost + curr_cost,
-# 				new_cost,
-# 				new_state,
-# 				new_pos,
-# 				depth + 1,
-# 				path + direction[move],
-# 			))
-# 			if is_solved(new_state):
-# 				print(f'{heur} Solution found!\n\n{path + direction[move]}\nDepth {depth + 1}\n')
-# 				if widget and visualizer:
-# 					widget.solved = True
-# 					widget.set_text(f'{heur} Solution Found!\n{path + direction[move]}', 20)
-# 					pygame.display.update()
-# 				return (path + direction[move], depth + 1)
-# 			if widget and visualizer:
-# 				widget.set_text(f'{heur} Solution Depth: {depth + 1}\n{path + direction[move]}', 20)
-# 				pygame.display.update()
-# 	print(f'{heur} Solution not found!\n')
-# 	if widget and visualizer:
-# 		widget.set_text(f'{heur} Solution Not Found!\nDepth {depth + 1}', 20)
-# 		pygame.display.update()
-# 	return (None, -1 if not heap else depth + 1)
-
-
+from .deadlock_manager import DeadlockManager
+from .deadlock_build import RetroBuilderSimple  # tên file bạn dùng
 def solve_astar(puzzle, widget=None, visualizer=False, heuristic='manhattan'):
 	matrix = puzzle
 	where = np.where((matrix == '*') | (matrix == '%'))
@@ -93,6 +31,11 @@ def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhatta
 
 	# board & encode
 	board = BoardIndex(matrix)
+	deadlock_mgr = DeadlockManager(board)
+	#cells = [idx for idx, (r,c) in enumerate(board.from_idx) if matrix[r,c] not in ('X','$','%') ]
+	builder = RetroBuilderSimple(board, deadlock_mgr,cells = None,matrix = matrix)
+	builder.build(max_k=3,max_comb_k=2,Pmax=2)
+	print("[DL] patterns", deadlock_mgr.count_patterns())
 	boxes_mask, player_idx = encode_state_from_str(initial_state, board)
 	z = Zobrist(board.num)
 	zkey = zobrist_initial(z, boxes_mask, player_idx)
@@ -124,15 +67,18 @@ def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhatta
 			new_state, move_cost, new_pos, old_pidx, new_pidx, box_delta = res
 			if not new_state:
 				continue
-			if is_deadlock(new_state, shape):
-				continue
+			# if is_deadlock(new_state, shape):
+			# 	continue
 
 			moved_from_idx, moved_to_idx = (None, None) if box_delta is None else box_delta
-			new_boxes_mask = boxes_mask
+   
+			new_boxes_mask = int(boxes_mask)
 			if moved_from_idx is not None:
-				new_boxes_mask &= ~(1 << moved_from_idx)
+				new_boxes_mask &= ~(1 << int(moved_from_idx))
 			if moved_to_idx is not None:
-				new_boxes_mask |= (1 << moved_to_idx)
+				new_boxes_mask |= (1 << int(moved_to_idx))
+			if deadlock_mgr.match_boxes(new_boxes_mask):
+				continue
 			new_zkey = zobrist_update(z, zkey, old_pidx, new_pidx, moved_from_idx, moved_to_idx)
 
 			key = (new_zkey, new_boxes_mask, new_pidx)
