@@ -55,8 +55,9 @@ def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhatta
 		distances = defaultdict(lambda: [])
 		curr_cost = dijkstra_sum(initial_state, player_pos, shape, distances)
 	elif heuristic == 'hungarian':
-		distances = defaultdict(lambda: [])
-		curr_cost = minimum_matching_sum(initial_state, player_pos, shape, distances)
+		# Dùng một cache bền trong suốt vòng lặp để tránh tính lại Hungarian khi cấu hình hộp không đổi
+		hung_cache = {}
+		curr_cost = minimum_matching_sum(initial_state, player_pos, shape, hung_cache)
 	else:
 		curr_cost = manhattan_sum(initial_state, player_pos, shape)  # default
 
@@ -105,8 +106,7 @@ def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhatta
 				if new_h == float('inf'):
 					continue
 			elif heuristic == 'hungarian':
-				distances = defaultdict(lambda: [])
-				new_h = minimum_matching_sum(new_state, new_pos, shape, distances)
+				new_h = minimum_matching_sum(new_state, new_pos, shape, hung_cache)
 				if new_h == float('inf'):
 					continue
 			else:

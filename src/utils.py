@@ -120,49 +120,63 @@ def minimum_matching_sum(state, player_pos, shape, distances):
 	# Tính ma trận khoảng cách giữa hộp và mục tiêu
 	n_boxes = len(boxes)
 	n_goals = len(goals)
-	
-	# Tạo ma trận chi phí (hộp x mục tiêu)
-	cost_matrix = []
-	for i, box in enumerate(boxes):
-		row = []
-		# Tính khoảng cách từ hộp này đến tất cả mục tiêu
-		box_distances = dijkstra(state, shape, box)
-		for goal in goals:
-			d = box_distances[goal]
-			if not np.isfinite(d):
-				d = height * width * 100
-			row.append(d)
-		cost_matrix.append(row)
 
-	
-	# Nếu có nhiều hộp hơn mục tiêu, thêm chi phí cao
-	if n_boxes > n_goals:
-		for i in range(n_boxes):
-			for j in range(n_goals, n_boxes):
-				cost_matrix[i].append(height * width)  
-	
-	# Nếu có nhiều mục tiêu hơn hộp, thêm hộp giả
-	elif n_goals > n_boxes:
-		for i in range(n_boxes, n_goals):
-			cost_matrix.append([height * width] * n_goals)
-	
-	# Tạo ma trận vuông
-	n = max(n_boxes, n_goals)
-	square_matrix = [[0] * n for _ in range(n)]
-	for i in range(n):
-		for j in range(n):
-			if i < len(cost_matrix) and j < len(cost_matrix[i]):
-				square_matrix[i][j] = cost_matrix[i][j]
-			else:
-				square_matrix[i][j] = height * width
-	
-	# Áp dụng giải thuật Hungarian
-	min_cost = hungarian_algorithm(square_matrix)
+	# Sử dụng distances như một cache bền
+	if distances is None:
+		distances = {}
+	hcache = distances.setdefault('hungarian_cache', {})
+	boxes_key = tuple(sorted(boxes))
+	goals_key = tuple(sorted(goals))
+	cache_key = (boxes_key, goals_key)
+
+	min_cost = hcache.get(cache_key)
+	if min_cost is None:
+		# Tạo ma trận chi phí (hộp x mục tiêu)
+		cost_matrix = []
+		for i, box in enumerate(boxes):
+			row = []
+			# Tính khoảng cách từ hộp này đến tất cả mục tiêu
+			box_distances = dijkstra(state, shape, box)
+			for goal in goals:
+				d = box_distances[goal]
+				if not np.isfinite(d):
+					d = height * width * 100
+				row.append(d)
+			cost_matrix.append(row)
+
+		# Nếu có nhiều hộp hơn mục tiêu, thêm chi phí cao
+		if n_boxes > n_goals:
+			for i in range(n_boxes):
+				for j in range(n_goals, n_boxes):
+					cost_matrix[i].append(height * width)
+		# Nếu có nhiều mục tiêu hơn hộp, thêm hộp giả
+		elif n_goals > n_boxes:
+			for i in range(n_boxes, n_goals):
+				cost_matrix.append([height * width] * n_goals)
+
+		# Tạo ma trận vuông
+		n = max(n_boxes, n_goals)
+		square_matrix = [[0] * n for _ in range(n)]
+		for i in range(n):
+			for j in range(n):
+				if i < len(cost_matrix) and j < len(cost_matrix[i]):
+					square_matrix[i][j] = cost_matrix[i][j]
+				else:
+					square_matrix[i][j] = height * width
+
+		# Áp dụng giải thuật Hungarian
+		min_cost = hungarian_algorithm(square_matrix)
+		# Lưu cache
+		hcache[cache_key] = min_cost
 	
 	# Thêm chi phí người chơi (khoảng cách từ người chơi đến hộp gần nhất)
 	player_cost = 0
 	if boxes:
-		player_distances = dijkstra(state, shape, player_pos=player_pos)
+		pcache = distances.setdefault('player_dijkstra', {})
+		player_distances = pcache.get(player_pos)
+		if player_distances is None:
+			player_distances = dijkstra(state, shape, player_pos=player_pos)
+			pcache[player_pos] = player_distances
 		player_cost = min(player_distances[box] for box in boxes)
 	
 	return min_cost + player_cost
