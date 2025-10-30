@@ -25,8 +25,8 @@ def sidebar_widgets(window):
 		onClick=lambda: pygame.event.post(pygame.event.Event(RESTART_EVENT)),
 		borderColor='black', borderThickness=2,
 	)
-	visualizer = Label(window, f'Visualize', 1055, 450, 16)
-	toggle = Toggle(window, 1160, 455, 18, 22, handleRadius=11)
+	visualizer = Label(window, f'Visualize', 1055, 510, 16)
+	toggle = Toggle(window, 1160, 515, 18, 22, handleRadius=11)
 	bfs_button = Button(
 		window, 1055, 280, 130, 40, text='Solve BFS', radius=5,
 		font=pygame.font.SysFont('Verdana', 18, bold=True),
@@ -46,6 +46,12 @@ def sidebar_widgets(window):
 		borderColor='black', borderThickness=2,
 	)
 
+	hungarian_button = Button(
+		window, 1055, 460, 130, 40, text='Hungarian', radius=5,
+		font=pygame.font.SysFont('Verdana', 14, bold=True),
+		onClick=lambda: pygame.event.post(pygame.event.Event(SOLVE_HUNGARIAN_EVENT)),
+		borderColor='black', borderThickness=2,
+	)
 	moves = Label(window, f' Moves - 0 ', 1055, 75, 20)
 	paths = MultilineLabel(window, f'Solution Depth: 0\n', 64, 0, 20)
 	level_clear = LevelClear(window, f'Level Clear!')
@@ -62,6 +68,7 @@ def sidebar_widgets(window):
 		'paths': paths,
 		'astarman': astarman_button,
 		'dijkstra': dijk_button,
+		'hungarian': hungarian_button,
 	}
 
 

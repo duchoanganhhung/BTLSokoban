@@ -189,6 +189,33 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
                         20
                     )
 
+            elif event.type == SOLVE_HUNGARIAN_EVENT:
+                print('Finding a solution for the puzzle\n')
+                widgets['paths'].reset('Solving with [Hungarian]')
+                show_solution = True
+                start = time.time()
+                solution, depth = solve_astar(
+                    game.get_matrix(), 
+                    widget=widgets['paths'], 
+                    visualizer=widgets['toggle'].getValue(),
+                    heuristic='hungarian',
+                )
+                runtime = round(time.time() - start, 5)
+                if solution:
+                    widgets['paths'].solved = True
+                    widgets['paths'].transparency = True
+                    widgets['paths'].set_text(
+                        f'[Hungarian] Solution Found in {runtime}s!\n{solution}',
+                        20
+                    )
+                    moves = play_solution(solution, game, widgets, show_solution, moves)
+                else:
+                    widgets['paths'].solved = False
+                    widgets['paths'].set_text(
+                        '[Hungarian] Solution Not Found!\n' + 
+                        ('Deadlock Found!' if depth < 0 else f'Depth {depth}'), 
+                        20,
+                    )
             elif event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_d, pygame.K_RIGHT):
                     moves += game.player.update(key='R')

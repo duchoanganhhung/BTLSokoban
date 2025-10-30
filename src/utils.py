@@ -104,6 +104,67 @@ def dijkstra_sum(state, player_pos, shape, distances):
 	player_cost = min(distances[player_pos][box] for box in boxes) if boxes else 0
 	return boxes_cost + player_cost
 
+from .hungarian import minimum_matching_cost as hungarian_algorithm
+
+def minimum_matching_sum(state, player_pos, shape, distances):
+	"""
+	Tính tổng chi phí tối thiểu cho bài toán gán hộp vào mục tiêu
+	"""
+	height, width = shape
+	boxes, goals, boxes_on_goal = find_boxes_and_goals(state, shape)
+	
+	# Nếu không có hộp hoặc không có mục tiêu, trả về 0
+	if not boxes or not goals:
+		return 0
+	
+	# Tính ma trận khoảng cách giữa hộp và mục tiêu
+	n_boxes = len(boxes)
+	n_goals = len(goals)
+	
+	# Tạo ma trận chi phí (hộp x mục tiêu)
+	cost_matrix = []
+	for i, box in enumerate(boxes):
+		row = []
+		# Tính khoảng cách từ hộp này đến tất cả mục tiêu
+		box_distances = dijkstra(state, shape, box)
+		for goal in goals:
+			row.append(box_distances[goal])
+		cost_matrix.append(row)
+
+	
+	# Nếu có nhiều hộp hơn mục tiêu, thêm chi phí cao
+	if n_boxes > n_goals:
+		for i in range(n_boxes):
+			for j in range(n_goals, n_boxes):
+				cost_matrix[i].append(height * width)  
+	
+	# Nếu có nhiều mục tiêu hơn hộp, thêm hộp giả
+	elif n_goals > n_boxes:
+		for i in range(n_boxes, n_goals):
+			cost_matrix.append([height * width] * n_goals)
+	
+	# Tạo ma trận vuông
+	n = max(n_boxes, n_goals)
+	square_matrix = [[0] * n for _ in range(n)]
+	for i in range(n):
+		for j in range(n):
+			if i < len(cost_matrix) and j < len(cost_matrix[i]):
+				square_matrix[i][j] = cost_matrix[i][j]
+			else:
+				square_matrix[i][j] = height * width
+	
+	# Áp dụng giải thuật Hungarian
+	min_cost = hungarian_algorithm(square_matrix)
+	
+	# Thêm chi phí người chơi (khoảng cách từ người chơi đến hộp gần nhất)
+	player_cost = 0
+	if boxes:
+		player_distances = dijkstra(state, shape, player_pos=player_pos)
+		player_cost = min(player_distances[box] for box in boxes)
+	
+	return min_cost + player_cost
+
+
 
 def is_deadlock(state, shape):
 	height, width = shape

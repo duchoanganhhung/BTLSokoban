@@ -7,7 +7,7 @@ import numpy as np
 import pygame
 
 from .utils import (can_move_delta, dijkstra_sum, get_state, is_deadlock, is_solved,
-                    manhattan_sum, print_state, find_boxes_and_goals)
+                    manhattan_sum, minimum_matching_sum, print_state, find_boxes_and_goals)
 from .state_codec import BoardIndex, encode_state_from_str, Zobrist, zobrist_initial, zobrist_update
 from .deadlock_manager import DeadlockManager
 from .deadlock_build import RetroBuilderSimple  # tên file bạn dùng
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
 def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhattan'):
 	print(f'A* - {heuristic.title()} Heuristic')
-	heur = '[A*]' if heuristic == 'manhattan' else '[Dijkstra]'
+	heur = '[A*]' if heuristic == 'manhattan' else '[Dijkstra]' if heuristic == 'dijkstra' else '[Hungarian]'
 	shape = matrix.shape
 	initial_state = get_state(matrix)
 	print_state(initial_state, shape)
@@ -51,9 +51,14 @@ def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhatta
 	curr_depth = 0
 	if heuristic == 'manhattan':
 		curr_cost = manhattan_sum(initial_state, player_pos, shape)
-	else:
+	elif heuristic == 'dijkstra':
 		distances = defaultdict(lambda: [])
 		curr_cost = dijkstra_sum(initial_state, player_pos, shape, distances)
+	elif heuristic == 'hungarian':
+		distances = defaultdict(lambda: [])
+		curr_cost = minimum_matching_sum(initial_state, player_pos, shape, distances)
+	else:
+		curr_cost = manhattan_sum(initial_state, player_pos, shape)  # default
 
 	# seen bằng khóa nhỏ
 	seen = {(zkey, boxes_mask, player_idx)}
@@ -95,10 +100,17 @@ def astar(matrix, player_pos, widget=None, visualizer=False, heuristic='manhatta
 
 			if heuristic == 'manhattan':
 				new_h = manhattan_sum(new_state, new_pos, shape)
-			else:
+			elif heuristic == 'dijkstra':
 				new_h = dijkstra_sum(new_state, new_pos, shape, distances)
 				if new_h == float('inf'):
 					continue
+			elif heuristic == 'hungarian':
+				distances = defaultdict(lambda: [])
+				new_h = minimum_matching_sum(new_state, new_pos, shape, distances)
+				if new_h == float('inf'):
+					continue
+			else:
+				new_h = manhattan_sum(new_state, new_pos, shape)
 
 			new_path = path + direction[move]
 			heappush(heap, (
