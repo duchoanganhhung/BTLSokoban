@@ -22,12 +22,10 @@ MIN_TILE = 24          # ô nhỏ nhất để vẫn nhìn rõ
 
 
 def get_max_level(levels_dir='levels'):
-    """Return the highest numeric level found in files named `lvlN.dat` in levels_dir.
-
-    If none found, return 1 as a sensible default.
     """
-    # Resolve levels_dir relative to this file so running from a different
-    # working directory still finds the `levels/` folder.
+    Trả về số cấp độ lớn nhất tìm thấy trong các tệp có tên `lvlN.dat` trong levels_dir.
+    Nếu không tìm thấy, trả về 1.
+    """
     base_dir = os.path.dirname(os.path.abspath(__file__))
     levels_path = levels_dir if os.path.isabs(levels_dir) else os.path.join(base_dir, levels_dir)
 
@@ -152,6 +150,7 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
                     widget=widgets['paths'],
                     visualizer=widgets['toggle'].getValue(),
                     heuristic='manhattan',
+                    macro=True
                 )
                 runtime = round(time.time() - start, 5)
                 if solution:
