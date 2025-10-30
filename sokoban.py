@@ -1,5 +1,7 @@
 import random
 import time
+import os
+import re
 
 import pygame
 import pygame_widgets
@@ -8,7 +10,7 @@ from src.astar import solve_astar
 from src.bfs import solve_bfs
 from src.events import *
 from src.game import Game
-from src.generator import generate
+# generator-based random puzzles removed: no import
 from src.utils import play_solution
 from src.widgets import sidebar_widgets
 
@@ -17,6 +19,34 @@ BASE_W, BASE_H = 1216, 640
 SIDEBAR_COLS = 4       # số cột ô dành riêng cho panel (bên phải)
 MAX_TILE = 64          # ô lớn nhất
 MIN_TILE = 24          # ô nhỏ nhất để vẫn nhìn rõ
+
+
+def get_max_level(levels_dir='levels'):
+    """Return the highest numeric level found in files named `lvlN.dat` in levels_dir.
+
+    If none found, return 1 as a sensible default.
+    """
+    # Resolve levels_dir relative to this file so running from a different
+    # working directory still finds the `levels/` folder.
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    levels_path = levels_dir if os.path.isabs(levels_dir) else os.path.join(base_dir, levels_dir)
+
+    try:
+        files = os.listdir(levels_path)
+    except Exception:
+        return 1
+    nums = []
+    for f in files:
+        m = re.match(r'lvl(\d+)\.dat$', f)
+        if m:
+            try:
+                nums.append(int(m.group(1)))
+            except ValueError:
+                continue
+    return max(nums) if nums else 1
+
+
+MAX_LEVEL = get_max_level()
 
 random.seed(6)
 
@@ -44,25 +74,19 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
     show_solution = False
     widgets['paths'].transparency = False
 
-    if random_game:
-        if not random_seed:
-            random_seed = random.randint(0, 99999)
-        generate(window, seed=random_seed, visualizer=widgets['toggle'].getValue())
+    # random-game feature removed: always load explicit levels
 
     if level <= 1:
         widgets['prev_button'].hide()
     else:
         widgets['prev_button'].show()
 
-    if level >= 8:
+    if level >= MAX_LEVEL:
         widgets['next_button'].hide()
     else:
         widgets['next_button'].show()
 
-    if random_game or level == 0:
-        widgets['label'].set_text(f'Seed {random_seed}', 18)
-    else:
-        widgets['label'].set_text(f'Level {level}', 30)
+    widgets['label'].set_text(f'Level {level}', 30)
 
     # Tạo game với tile động + chừa sidebar
     game = Game(level=level, window=window, panel_cols=SIDEBAR_COLS, tile=int(tile))
@@ -73,39 +97,27 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
         for event in events:
             if event.type == pygame.QUIT:
                 game_loop = False
-                return {'keep_playing': False, 'reset': -1, 'random_game': False}
+                return {'keep_playing': False, 'reset': -1}
 
             elif event.type == RESTART_EVENT:
                 game_loop = False
                 print(f'Restarting level {level}\n')
                 window.fill((0, 0, 0, 0))
-                return {'keep_playing': True, 'reset': level, 'random_game': random_game, 'random_seed': random_seed}
+                return {'keep_playing': True, 'reset': level}
 
             elif event.type == PREVIOUS_EVENT:
                 game_loop = False
                 print(f'Previous level {level - 1}\n')
                 window.fill((0, 0, 0, 0))
-                return {'keep_playing': True, 'reset': level - 1, 'random_game': False}
+                return {'keep_playing': True, 'reset': level - 1}
 
             elif event.type == NEXT_EVENT:
                 game_loop = False
                 print(f'Next level {level + 1}\n')
                 window.fill((0, 0, 0, 0))
-                return {'keep_playing': True, 'reset': level + 1, 'random_game': False}
+                return {'keep_playing': True, 'reset': level + 1}
 
-            elif event.type == RANDOM_GAME_EVENT:
-                game_loop = False
-                print('Loading a random puzzle\n')
-                window.fill((0, 0, 0, 0))
-                new_seed = None
-                try:
-                    new_seed = int(widgets['seedbox'].getText())
-                    if new_seed < 1 or new_seed > 99999:
-                        new_seed = None
-                        raise ValueError('Seed must be between 1 and 99999')
-                except ValueError as e:
-                    print(e)
-                return {'keep_playing': True, 'reset': 0, 'random_game': True, 'random_seed': new_seed}
+            # RANDOM_GAME_EVENT handling removed — random puzzles disabled
 
             elif event.type == SOLVE_BFS_EVENT:
                 print('Finding a solution for the puzzle\n')
@@ -201,7 +213,6 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
         # Vẽ UI
         pygame_widgets.update(events)
         widgets['label'].draw()
-        widgets['seed'].draw()
         widgets['visualizer'].draw()
         widgets['moves_label'].set_moves(f' Moves - {moves} ', 20)
         if show_solution:
@@ -222,7 +233,7 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
 
     del game
     print('Objects cleared!\n')
-    return {'keep_playing': True, 'reset': 0 if random_game else -1, 'random_game': random_game}
+    return {'keep_playing': True, 'reset': -1}
 
 
 def main():
@@ -236,24 +247,17 @@ def main():
 
     level = 1
     keep_playing = True
-    random_game = False
-    random_seed = None
 
     while keep_playing:
         # Tính tile động theo level (cửa sổ cố định)
-        if not random_game and level >= 1:
+        if level >= 1:
             try:
                 rows, cols = probe_level_size(f'levels/lvl{level}.dat')
             except Exception:
                 rows, cols = 10, 10
             tile = compute_tile(BASE_W, BASE_H, cols, rows, SIDEBAR_COLS, MAX_TILE, MIN_TILE)
             print(f'Loading level {level} (rows={rows}, cols={cols}, tile={tile})\n')
-        else:
-            rows, cols = 10, 10
-            tile = MAX_TILE
-            print('Loading random game')
-
-        game_data = play_game(window, level, random_game, random_seed, tile=tile, **widgets)
+        game_data = play_game(window, level, tile=tile, **widgets)
 
         keep_playing = game_data.get('keep_playing', False)
         if not keep_playing:
@@ -261,9 +265,7 @@ def main():
             quit()
 
         reset = game_data.get('reset', -1)
-        random_game = game_data.get('random_game', False)
-        random_seed = game_data.get('random_seed')
-        level = reset if reset >= 0 else min(level + 1, 8)
+        level = reset if reset >= 0 else min(level + 1, MAX_LEVEL)
 
 
 if __name__ == '__main__':

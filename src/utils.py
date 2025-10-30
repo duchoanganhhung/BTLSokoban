@@ -14,7 +14,6 @@ def play_solution(solution, game, widgets, show_solution, moves):
 		game.object_group.draw(game.window)
 		pygame_widgets.update(events)
 		widgets['label'].draw()
-		widgets['seed'].draw()
 		widgets['visualizer'].draw()
 		widgets['moves_label'].set_moves(f' Moves - {moves} ', 20)
 		if show_solution:

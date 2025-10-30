@@ -1,6 +1,5 @@
 import pygame
 from pygame_widgets.button import Button
-from pygame_widgets.textbox import TextBox
 from pygame_widgets.toggle import Toggle
 
 from .events import *
@@ -26,12 +25,6 @@ def sidebar_widgets(window):
 		onClick=lambda: pygame.event.post(pygame.event.Event(RESTART_EVENT)),
 		borderColor='black', borderThickness=2,
 	)
-	random_game = Button(
-		window, 1055, 220, 130, 40, text='Random', radius=5,
-		font=pygame.font.SysFont('Verdana', 18, bold=True),
-		onClick=lambda: pygame.event.post(pygame.event.Event(RANDOM_GAME_EVENT)),
-		borderColor='black', borderThickness=2,
-	)
 	visualizer = Label(window, f'Visualize', 1055, 450, 16)
 	toggle = Toggle(window, 1160, 455, 18, 22, handleRadius=11)
 	bfs_button = Button(
@@ -52,20 +45,12 @@ def sidebar_widgets(window):
 		onClick=lambda: pygame.event.post(pygame.event.Event(SOLVE_DIJKSTRA_EVENT)),
 		borderColor='black', borderThickness=2,
 	)
-	seed = Label(window, f'Seed', 1055, 190, 16)
-	seedbox = TextBox(
-		window, 1110, 191, 75, 28, placeholderText='Seed',
-		borderColour=(0, 0, 0), textColour=(0, 0, 0),
-		onSubmit=lambda: pygame.event.post(pygame.event.Event(RANDOM_GAME_EVENT)), 
-		borderThickness=1, radius=2,
-		font=pygame.font.SysFont('Verdana', 14),
-	)
+
 	moves = Label(window, f' Moves - 0 ', 1055, 75, 20)
 	paths = MultilineLabel(window, f'Solution Depth: 0\n', 64, 0, 20)
 	level_clear = LevelClear(window, f'Level Clear!')
 	return {
 		'restart': restart,
-		'random_button': random_game,
 		'moves_label': moves,
 		'prev_button': prev_button, 
 		'next_button': next_button, 
@@ -75,8 +60,6 @@ def sidebar_widgets(window):
 		'visualizer': visualizer,
 		'bfs': bfs_button,
 		'paths': paths,
-		'seedbox': seedbox,
-		'seed': seed,
 		'astarman': astarman_button,
 		'dijkstra': dijk_button,
 	}
