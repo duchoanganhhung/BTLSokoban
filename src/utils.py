@@ -128,7 +128,10 @@ def minimum_matching_sum(state, player_pos, shape, distances):
 		# Tính khoảng cách từ hộp này đến tất cả mục tiêu
 		box_distances = dijkstra(state, shape, box)
 		for goal in goals:
-			row.append(box_distances[goal])
+			d = box_distances[goal]
+			if not np.isfinite(d):
+				d = height * width * 100
+			row.append(d)
 		cost_matrix.append(row)
 
 	
