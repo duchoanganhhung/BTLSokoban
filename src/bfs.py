@@ -5,7 +5,7 @@ import numpy as np
 import pygame
 
 from .utils import can_move, get_state, is_deadlock, is_solved, print_state
-from .state_codec import BoardIndex, encode_state_from_str, Zobrist, zobrist_initial, zobrist_update  # <- mới
+from .state_codec import BoardIndex, encode_state_from_str, ZobristHash  # use unified Zobrist
 from .deadlock_manager import DeadlockManager
 from .deadlock_build import RetroBuilderSimple  # tên file bạn dùng
 
@@ -77,7 +77,7 @@ import numpy as np
 import pygame
 
 from .utils import get_state, is_deadlock, is_solved, print_state, can_move_delta  # <- thêm can_move_delta
-from .state_codec import BoardIndex, encode_state_from_str, Zobrist, zobrist_initial, zobrist_update  # <- mới
+from .state_codec import BoardIndex, encode_state_from_str, ZobristHash  # use unified Zobrist
 
 def bfs(matrix, player_pos, widget=None, visualizer=False):
 	print('Breadth-First Search')
@@ -94,9 +94,9 @@ def bfs(matrix, player_pos, widget=None, visualizer=False):
 	print("[DL] patterns", deadlock_mgr.count_patterns())
 	boxes_mask, player_idx = encode_state_from_str(initial_state, board)
 
-	# --- NEW: zobrist ---
-	z = Zobrist(board.num)
-	zkey = zobrist_initial(z, boxes_mask, player_idx)
+	# --- NEW: zobrist (unified) ---
+	z = ZobristHash(num_cells=board.num)
+	zkey = z.initial_key(boxes_mask, player_idx)
 
 	# --- NEW: seen là hash table các khóa nhỏ ---
 	seen = {(zkey, boxes_mask, player_idx)}
@@ -134,8 +134,8 @@ def bfs(matrix, player_pos, widget=None, visualizer=False):
 			#DL check
 			if deadlock_mgr.match_boxes(new_boxes_mask):
 				continue
-			new_zkey = zobrist_update(
-				z, zkey, old_pidx, new_pidx, moved_from_idx, moved_to_idx
+			new_zkey = z.update_key(
+				zkey, old_pidx, new_pidx, moved_from_idx, moved_to_idx
 			)
 
 			key = (new_zkey, new_boxes_mask, new_pidx)

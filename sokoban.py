@@ -150,7 +150,7 @@ def play_game(window, level=1, random_game=False, random_seed=None, tile=64, **w
                     widget=widgets['paths'],
                     visualizer=widgets['toggle'].getValue(),
                     heuristic='manhattan',
-                    macro=True
+                    macro=True,
                 )
                 runtime = round(time.time() - start, 5)
                 if solution:
