@@ -19,12 +19,14 @@ def sidebar_widgets(window):
 		onClick=lambda: pygame.event.post(pygame.event.Event(NEXT_EVENT)),
 		borderColor='black', borderThickness=2,
 	)
-	restart = Button(
-		window, 1055, 130, 130, 40, text='Restart', radius=5,
-		font=pygame.font.SysFont('Verdana', 18, bold=True),
-		onClick=lambda: pygame.event.post(pygame.event.Event(RESTART_EVENT)),
-		borderColor='black', borderThickness=2,
-	)
+	# restart = Button(
+	# 	window, 1055, 130, 130, 40, text='Restart', radius=5,
+	# 	font=pygame.font.SysFont('Verdana', 18, bold=True),
+	# 	onClick=lambda: pygame.event.post(pygame.event.Event(RESTART_EVENT)),
+	# 	borderColor='black', borderThickness=2,
+	# )
+# The code snippet you provided is creating a visualizer label and a toggle button in the sidebar of a
+# graphical user interface (GUI) using Pygame library in Python. Here is what each line is doing:
 	visualizer = Label(window, f'Visualize', 1055, 510, 16)
 	toggle = Toggle(window, 1160, 515, 18, 22, handleRadius=11)
 	bfs_button = Button(
@@ -40,23 +42,23 @@ def sidebar_widgets(window):
 		borderColor='black', borderThickness=2,
 	)
 	dijk_button = Button(
-		window, 1055, 400, 130, 40, text='Dijkstra', radius=5,
+		window, 1055, 400, 130, 40, text='A* Dijkstra', radius=5,
 		font=pygame.font.SysFont('Verdana', 14, bold=True),
 		onClick=lambda: pygame.event.post(pygame.event.Event(SOLVE_DIJKSTRA_EVENT)),
 		borderColor='black', borderThickness=2,
 	)
 
-	hungarian_button = Button(
-		window, 1055, 460, 130, 40, text='Hungarian', radius=5,
-		font=pygame.font.SysFont('Verdana', 14, bold=True),
-		onClick=lambda: pygame.event.post(pygame.event.Event(SOLVE_HUNGARIAN_EVENT)),
-		borderColor='black', borderThickness=2,
-	)
+	# hungarian_button = Button(
+	# 	window, 1055, 460, 130, 40, text='Hungarian', radius=5,
+	# 	font=pygame.font.SysFont('Verdana', 14, bold=True),
+	# 	onClick=lambda: pygame.event.post(pygame.event.Event(SOLVE_HUNGARIAN_EVENT)),
+	# 	borderColor='black', borderThickness=2,
+	# )
 	moves = Label(window, f' Moves - 0 ', 1055, 75, 20)
 	paths = MultilineLabel(window, f'Solution Depth: 0\n', 64, 0, 20)
 	level_clear = LevelClear(window, f'Level Clear!')
 	return {
-		'restart': restart,
+		# 'restart': restart,
 		'moves_label': moves,
 		'prev_button': prev_button, 
 		'next_button': next_button, 
@@ -68,7 +70,7 @@ def sidebar_widgets(window):
 		'paths': paths,
 		'astarman': astarman_button,
 		'dijkstra': dijk_button,
-		'hungarian': hungarian_button,
+		# 'hungarian': hungarian_button,
 	}
 
 

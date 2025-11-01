@@ -73,34 +73,7 @@ def zobrist_initial(z: Zobrist, boxes_mask: int, player_idx: int) -> int:
     if player_idx >= 0:
         key ^= z.player_rand[player_idx]
     return key
-# def zobrist_initial(z: Zobrist, boxes_mask: int, player_idx: int) -> int:
-#     key = 0
-#     bm = boxes_mask
-#     num_boxes = (int(boxes_mask) & 0xFFFFFFFFFFFFFFFF).bit_count()
-#     print("Số hộp đang bật =", num_boxes)
-#     idx = highest_bit_index(boxes_mask)
-#     print(f"Bit cao nhất được bật là: {idx}")
-#     idx = 0
-#     while bm:
-#         if bm & 1:
-#             try:
-#                 key ^= z.box_rand[idx]
-#             except IndexError:
-#                 print(f"[ERROR] IndexError at idx={idx}")
-#                 print(f" - boxes_mask = {boxes_mask} (bin={bin(boxes_mask)})")
-#                 print(f" - len(z.box_rand) = {len(z.box_rand)}")
-#                 raise  # giữ nguyên lỗi để traceback hiện ra
-#         bm >>= 1
-#         idx += 1
 
-#     if player_idx >= 0:
-#         try:
-#             key ^= z.player_rand[player_idx]
-#         except IndexError:
-#             print(f"[ERROR] player_idx={player_idx} out of range!")
-#             print(f" - len(z.player_rand) = {len(z.player_rand)}")
-#             raise
-#     return key
 
 def zobrist_update(
     z: Zobrist,
@@ -121,10 +94,4 @@ def zobrist_update(
     if moved_box_to_idx is not None:
         key ^= z.box_rand[moved_box_to_idx]
     return key
-# def highest_bit_index(mask: int) -> int:
-#     """
-#     Trả về chỉ số bit cao nhất đang bật trong mask.
-#     Ví dụ: nếu mask = 0b1001000 → trả về 6.
-#     """
-#     unsigned = int(mask) if mask >= 0 else mask & 0xFFFFFFFFFFFFFFFF
-#     return unsigned.bit_length() - 1 if unsigned != 0 else -1
+
